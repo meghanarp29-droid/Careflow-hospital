@@ -1,0 +1,6 @@
+{
+  "name": "CareFlow Operation Scheduler",
+  "description": "A high-performance operation and operating theater scheduling dashboard with real-time analytics, patient/doctor details, surgical reports, and material tracking.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

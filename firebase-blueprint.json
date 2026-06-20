@@ -1,0 +1,241 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Authorized user profile and permissions",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "surgeon", "nurse", "procurement_officer"] },
+        "department": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "lastLogin": { "type": "string" },
+        "profileImage": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Doctor": {
+      "title": "Doctor Details",
+      "description": "Information about a hospital doctor or surgeon",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "specialty": { "type": "string" },
+        "department": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"] }
+      },
+      "required": ["id", "name", "specialty", "department", "status"]
+    },
+    "Patient": {
+      "title": "Patient Details",
+      "description": "Hospital patient records",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "age": { "type": "number" },
+        "gender": { "type": "string" },
+        "bloodType": { "type": "string" },
+        "phone": { "type": "string" },
+        "admissionDate": { "type": "string" },
+        "medicalHistory": { "type": "string" }
+      },
+      "required": ["id", "name", "age", "gender"]
+    },
+    "Surgery": {
+      "title": "Operation Surgery Detail",
+      "description": "Surgical procedure and Operating Theater details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "dateTime": { "type": "string" },
+        "otId": { "type": "string" },
+        "anesthesiaType": { "type": "string" },
+        "anesthesiologistName": { "type": "string" },
+        "primarySurgeonId": { "type": "string" },
+        "primarySurgeonName": { "type": "string" },
+        "assistantName": { "type": "string" },
+        "nurses": { "type": "array" },
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "preOpLog": { "type": "string" },
+        "postOpLog": { "type": "string" },
+        "status": { "type": "string", "enum": ["scheduled", "ongoing", "completed", "canceled"] },
+        "surgicalReport": { "type": "string" },
+        "remarks": { "type": "string" },
+        "materials": { "type": "string" },
+        "drugs": { "type": "string" },
+        "instruments": { "type": "string" },
+        "emergency": { "type": "boolean" },
+        "phaseNotes": { "type": "object" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": [
+        "id",
+        "dateTime",
+        "otId",
+        "anesthesiaType",
+        "anesthesiologistName",
+        "primarySurgeonId",
+        "primarySurgeonName",
+        "patientId",
+        "patientName",
+        "status"
+      ]
+    },
+    "ActivityLog": {
+      "title": "OT Audit Log",
+      "description": "Real-time records of scheduling actions and emergency updates for security audits",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "action": { "type": "string" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "details": { "type": "string" },
+        "severity": { "type": "string" }
+      },
+      "required": ["id", "timestamp", "action", "userId", "userEmail", "details"]
+    },
+    "SystemSettings": {
+      "title": "System Settings",
+      "description": "Global emergency configuration and status overrides",
+      "type": "object",
+      "properties": {
+        "active": { "type": "boolean" },
+        "message": { "type": "string" },
+        "targetOt": { "type": "string" },
+        "eta": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["active", "message", "targetOt", "eta"]
+    },
+    "BloodStockItem": {
+      "title": "Blood Stock Item",
+      "description": "Hematology stock item in the blood bank storage database",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "group": { "type": "string" },
+        "units": { "type": "number" },
+        "criticalThreshold": { "type": "number" },
+        "emergencyReserve": { "type": "number" },
+        "lastUpdated": { "type": "string" },
+        "usageTrend": { "type": "string", "enum": ["increasing", "stable", "decreasing"] }
+      },
+      "required": ["id", "group", "units", "criticalThreshold", "emergencyReserve", "lastUpdated", "usageTrend"]
+    },
+    "LiveNotification": {
+      "title": "Live Notification",
+      "description": "Urgent and non-urgent system notifications for hospital staff",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "type": { "type": "string", "enum": ["success", "warning", "info", "error"] },
+        "read": { "type": "boolean" }
+      },
+      "required": ["id", "text", "timestamp", "type", "read"]
+    },
+    "EmergencyArrivalEvent": {
+      "title": "Emergency Arrival Event",
+      "description": "Incoming severe trauma event description",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "active": { "type": "boolean" },
+        "etaSeconds": { "type": "number" },
+        "patientName": { "type": "string" },
+        "traumaLevel": { "type": "string", "enum": ["critical", "high", "moderate"] }
+      },
+      "required": ["id", "active", "patientName"]
+    },
+    "ProcurementInventoryItem": {
+      "title": "Procurement Inventory Item",
+      "description": "Medical surgical supplies and resources tracking status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["consumables", "instruments", "drugs", "implants"] },
+        "stockLevel": { "type": "number" },
+        "criticalThreshold": { "type": "number" },
+        "unit": { "type": "string" },
+        "costPerUnit": { "type": "number" },
+        "lastOrdered": { "type": "string" },
+        "status": { "type": "string", "enum": ["optimal", "reorder", "critical"] }
+      },
+      "required": ["id", "name", "category", "stockLevel", "criticalThreshold", "unit", "costPerUnit", "status"]
+    },
+    "ShiftNote": {
+      "title": "Shift Handover Note",
+      "description": "Surgical command clinical handover transition notes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorEmail": { "type": "string" },
+        "note": { "type": "string" },
+        "shiftType": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "keyAlertsResolved": { "type": "string" },
+        "pendingFollowUps": { "type": "string" }
+      },
+      "required": ["id", "authorId", "authorName", "authorEmail", "note", "shiftType", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile data"
+    },
+    "/doctors/{doctorId}": {
+      "schema": "Doctor",
+      "description": "Doctor profile registration"
+    },
+    "/patients/{patientId}": {
+      "schema": "Patient",
+      "description": "Patient medical record file"
+    },
+    "/surgeries/{surgeryId}": {
+      "schema": "Surgery",
+      "description": "Operating theater operation timing schedule"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "ActivityLog",
+      "description": "History logs of any scheduler modifications for security audit"
+    },
+    "/system/{documentId}": {
+      "schema": "SystemSettings",
+      "description": "Global system status alerts"
+    },
+    "/bloodInventory/{itemId}": {
+      "schema": "BloodStockItem",
+      "description": "Emergency blood reserve inventory storage levels"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "LiveNotification",
+      "description": "Active alert messages shown to operating theater staff"
+    },
+    "/emergencyEvents/{eventId}": {
+      "schema": "EmergencyArrivalEvent",
+      "description": "Real-time critical incoming rescue ambulance status"
+    },
+    "/procurementInventory/{itemId}": {
+      "schema": "ProcurementInventoryItem",
+      "description": "Hospital medical consumable and instrument procurement stocks"
+    },
+    "/shiftNotes/{noteId}": {
+      "schema": "ShiftNote",
+      "description": "Surgical ward shift transition summary handover notes"
+    }
+  }
+}

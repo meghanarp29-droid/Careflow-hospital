@@ -1,0 +1,165 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Is current user Admin? Checked by:
+    // - Specific bootstrapped email "hospital.admin@careflow.com"
+    // - Or an active record in /users/{userId} with role == 'admin'
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "hospital.admin@careflow.com" ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin")
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function hasRole(role) {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role
+      );
+    }
+
+    function isValidBloodId(id) {
+      return id in ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
+    }
+
+    function isValidBloodStock(data) {
+      return data.keys().hasAll(['id', 'group', 'units', 'criticalThreshold', 'emergencyReserve', 'lastUpdated', 'usageTrend']) &&
+             data.keys().size() == 7 &&
+             data.id is string && data.id.size() <= 10 &&
+             data.group is string && data.group.size() <= 10 &&
+             data.units is int && data.units >= 0 && data.units <= 1000 &&
+             data.criticalThreshold is int && data.criticalThreshold >= 0 &&
+             data.emergencyReserve is int && data.emergencyReserve >= 0 &&
+             data.lastUpdated is string &&
+             (data.usageTrend == 'increasing' || data.usageTrend == 'stable' || data.usageTrend == 'decreasing');
+    }
+
+    function isValidSystemSettings(data) {
+      return data.keys().hasAll(['active', 'message', 'targetOt', 'eta']) &&
+             data.active is bool &&
+             data.message is string && data.message.size() <= 500 &&
+             data.targetOt is string && data.targetOt.size() <= 100 &&
+             data.eta is string && data.eta.size() <= 20;
+    }
+
+    function isValidShiftNote(data) {
+      return data.keys().hasAll(['id', 'authorId', 'authorName', 'authorEmail', 'note', 'shiftType', 'timestamp']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.authorId == request.auth.uid &&
+             data.authorEmail == request.auth.token.email &&
+             data.note is string && data.note.size() <= 2000 &&
+             data.shiftType is string && data.shiftType.size() <= 50 &&
+             data.timestamp is string;
+    }
+
+    // --- Users Collection Rules ---
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+      // Regular users can create their own profile, with authorized clinical/staff roles (but can't self-promote to 'admin')
+      allow create: if isSignedIn() && isOwner(userId) && 
+        request.resource.data.keys().hasAll(['uid', 'email', 'role']) && 
+        (request.resource.data.role in ['surgeon', 'nurse', 'procurement_officer'] || isAdmin());
+      // Regular users can update their profile but NOT shift roles
+      allow update: if isSignedIn() && isOwner(userId) && 
+        request.resource.data.keys().hasAll(['uid', 'email', 'role']) && 
+        request.resource.data.uid == resource.data.uid && 
+        request.resource.data.email == resource.data.email &&
+        (request.resource.data.role == resource.data.role || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // --- Doctors Collection Rules ---
+    match /doctors/{doctorId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin() && isValidId(doctorId);
+    }
+
+    // --- Patients Collection Rules ---
+    match /patients/{patientId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin() && isValidId(patientId);
+    }
+
+    // --- Surgeries (Schedules) Collection Rules ---
+    match /surgeries/{surgeryId} {
+      allow read: if isSignedIn();
+      allow create, delete: if isAdmin() && isValidId(surgeryId);
+      allow update: if isSignedIn() && isValidId(surgeryId);
+    }
+
+    // --- AuditLogs (ActivityLogs) Collection Rules ---
+    match /auditLogs/{logId} {
+      allow read: if isSignedIn();
+      // Anyone signed in can build activity log of their actions, but must attribute it to themselves
+      allow create: if isSignedIn() && isValidId(logId) && 
+        request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false; // Immutable logs
+    }
+
+    // --- System Status and Emergency Rules ---
+    match /system/{documentId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && isValidId(documentId) &&
+        isValidSystemSettings(request.resource.data) &&
+        (isAdmin() || request.resource.data.active == false);
+      allow delete: if isAdmin();
+    }
+
+    // --- Blood Inventory Rules ---
+    match /bloodInventory/{itemId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() &&
+        isValidBloodId(itemId) &&
+        isValidBloodStock(request.resource.data) &&
+        (isAdmin() || hasRole("procurement_officer"));
+      allow delete: if isAdmin();
+    }
+
+    // --- Notifications Collection Rules ---
+    match /notifications/{notificationId} {
+      allow read, update: if isSignedIn();
+      allow create, delete: if isSignedIn();
+    }
+
+    // --- EmergencyEvents Collection Rules ---
+    match /emergencyEvents/{eventId} {
+      allow read, update: if isSignedIn();
+      allow create, delete: if isSignedIn();
+    }
+
+    // --- ProcurementInventory Collection Rules ---
+    match /procurementInventory/{itemId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && (isAdmin() || hasRole("procurement_officer") || hasRole("admin"));
+      allow delete: if isAdmin();
+    }
+
+    // --- ShiftNotes Collection Rules ---
+    match /shiftNotes/{noteId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(noteId) && isValidShiftNote(request.resource.data);
+      allow update: if isSignedIn() && isValidId(noteId) && isValidShiftNote(request.resource.data) && resource.data.authorId == request.auth.uid;
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "projectId": "careflow-hospital-system",
+  "appId": "1:602975498516:web:051a185c1e1fb685e1d201",
+  "apiKey": "AIzaSyA9xdjqsFVc2Qjy6QDzXkuPgpUE1916YNc",
+  "authDomain": "careflow-hospital-system.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "careflow-hospital-system.firebasestorage.app",
+  "messagingSenderId": "602975498516",
+  "measurementId": "G-1XFH54MYQT"
+}
