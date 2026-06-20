@@ -1,2 +1,1 @@
-# Careflow-hospital
-A responsive Hospital Management System with Admin, Doctor, Patient and OT Management modules built using 
+# Careflow-hospitalCareFlow is a modern hospital management and operating theatre monitoring platform designed to streamline surgical operations, patient recovery tracking, blood bank management, staff coordination, and hospital analytics through a centralized dashboard.
